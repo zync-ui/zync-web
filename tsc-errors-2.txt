@@ -1,9 +1,0 @@
-﻿src/components/Filter/FilterPanel.tsx(2,37): error TS6133: 'Pause' is declared but its value is never read.
-src/components/Filter/FilterPanel.tsx(122,17): error TS6133: 'onSourceTypeChange' is declared but its value is never read.
-src/components/LogEntry/LogEntryRow.tsx(3,143): error TS6133: 'Calendar' is declared but its value is never read.
-src/components/LogEntry/LogEntryRow.tsx(3,153): error TS6133: 'Hash' is declared but its value is never read.
-src/components/LogEntry/LogEntryRow.tsx(3,172): error TS6133: 'Layout' is declared but its value is never read.
-src/components/LogEntry/LogEntryRow.tsx(3,180): error TS6133: 'Box' is declared but its value is never read.
-src/components/LogEntry/LogEntryRow.tsx(3,185): error TS6133: 'Maximize2' is declared but its value is never read.
-src/components/LogEntry/LogEntryRow.tsx(757,33): error TS2322: Type 'unknown' is not assignable to type 'ReactNode'.
-src/components/Settings/SettingsModal.tsx(43,12): error TS6133: 'browseSupported' is declared but its value is never read.

@@ -26,10 +26,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, o
         if (isOpen) {
             // Load saved settings
             const savedType = (localStorage.getItem('logSourceType') as LogSourceType) || 'local';
+            const effectiveType: LogSourceType = savedType === 'server' ? 'local' : savedType;
             const savedLocalPath = localStorage.getItem('logSourceLocalPath') || localStorage.getItem('logSourcePath') || DEFAULT_LOCAL_PATH;
             const savedServerPath = localStorage.getItem('logSourceServerPath') || '';
 
-            setSourceType(savedType);
+            setSourceType(effectiveType);
             setLocalPath(savedLocalPath);
             setServerPath(savedServerPath);
             setValidationStatus('idle');
@@ -38,67 +39,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, o
                     }
     }, [isOpen]);
 
-    const fileInputRef = React.useRef<HTMLInputElement>(null);
-    // const [browseSupported] = useState(() => 'showDirectoryPicker' in window);
-
     const currentPath = sourceType === 'local' ? localPath : serverPath;
     const setCurrentPath = (path: string) => {
         if (sourceType === 'local') {
             setLocalPath(path);
         } else {
             setServerPath(path);
-        }
-    };
-
-    const handleBrowseClick = () => {
-        // Trigger the hidden file input which is now configured for folder selection
-        fileInputRef.current?.click();
-    };
-
-    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const files = e.target.files;
-        if (files && files.length > 0) {
-            // Clear any previous file selections
-                        setDetectedDates([]);
-
-            // Try to get the folder path
-            const file = files[0] as any;
-
-            // 1. Check for Electron-style absolute path (most accurate if available)
-            if (file.path) {
-                const fullPath = file.path;
-                // For a folder, it might be the path to the folder itself or a file in it
-                // If it's a file, we want its parent directory
-                const lastSlash = Math.max(fullPath.lastIndexOf('\\'), fullPath.lastIndexOf('/'));
-                const folderPath = lastSlash > -1 ? fullPath.substring(0, lastSlash) : fullPath;
-
-                setLocalPath(folderPath);
-                setValidationStatus('success');
-                setErrorMessage('');
-                return;
-            }
-
-            // 2. Fallback: Extract from webkitRelativePath
-            const relativePath = file.webkitRelativePath;
-            if (relativePath) {
-                // webkitRelativePath is "folderName/subfolder/file.ext"
-                // We want to extract the full folder path
-                const pathParts = relativePath.split(/[/\\]/);
-                const folderName = pathParts[0];
-
-                // If the user already has a base path, we could append it, 
-                // but usually they just want the folder name filled in so they can complete it.
-                setLocalPath(folderName);
-                setValidationStatus('success');
-                setErrorMessage(`Selected folder: "${folderName}". Please ensure the full path is correct.`);
-            } else {
-                setValidationStatus('error');
-                setErrorMessage("Please select a folder. No folder path could be determined.");
-            }
-        } else {
-            // No files selected
-            setValidationStatus('error');
-            setErrorMessage("Please select a folder");
         }
     };
 
@@ -217,14 +163,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, o
                             <button
                                 onClick={() => handleSourceTypeChange('local')}
                                 className={cn(
-                                    "relative flex flex-col items-center justify-center gap-2 p-5 rounded-xl border transition-all duration-300 group overflow-hidden",
+                                    "relative flex flex-col items-center justify-center gap-2 p-5 rounded-xl border transition-all duration-300 group overflow-hidden min-h-[120px]",
                                     "backdrop-blur-md",
                                     sourceType === 'local'
                                         ? "bg-cyan-500/10 border-cyan-400/60 text-cyan-400 shadow-[0_0_25px_rgba(34,211,238,0.3)]"
                                         : "bg-white/5 border-white/10 text-gray-400 hover:bg-cyan-500/10 hover:border-cyan-400/40 hover:text-cyan-300 hover:shadow-[0_0_20px_rgba(34,211,238,0.2)]"
                                 )}
                             >
-                                {/* Glassy shine overlay */}
                                 <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-transparent opacity-50 pointer-events-none" />
 
                                 <HardDrive size={28} strokeWidth={1.5} className="relative z-10 group-hover:scale-110 transition-transform duration-300" />
@@ -237,28 +182,27 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, o
                                 )}
                             </button>
 
-                            {/* Server - Violet Theme */}
+                            {/* On-Premise - Coming soon */}
                             <button
-                                onClick={() => handleSourceTypeChange('server')}
+                                type="button"
+                                disabled
                                 className={cn(
-                                    "relative flex flex-col items-center justify-center gap-2 p-5 rounded-xl border transition-all duration-300 group overflow-hidden",
-                                    "backdrop-blur-md",
-                                    sourceType === 'server'
-                                        ? "bg-violet-500/10 border-violet-400/60 text-violet-400 shadow-[0_0_25px_rgba(167,139,250,0.3)]"
-                                        : "bg-white/5 border-white/10 text-gray-400 hover:bg-violet-500/10 hover:border-violet-400/40 hover:text-violet-300 hover:shadow-[0_0_20px_rgba(167,139,250,0.2)]"
+                                    "relative flex flex-col items-center justify-center gap-2 p-5 rounded-xl border transition-all duration-300 overflow-hidden min-h-[120px]",
+                                    "backdrop-blur-md cursor-not-allowed opacity-80",
+                                    "bg-violet-500/5 border-violet-400/30 text-violet-300/70"
                                 )}
                             >
-                                {/* Glassy shine overlay */}
-                                <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-transparent opacity-50 pointer-events-none" />
+                                <span className="absolute top-2 right-2 z-20 text-[8px] font-semibold uppercase tracking-wide text-violet-200 bg-violet-500/20 border border-violet-400/40 px-2 py-0.5 rounded-full leading-tight">
+                                    Currently Developing
+                                </span>
 
-                                <Server size={28} strokeWidth={1.5} className="relative z-10 group-hover:scale-110 transition-transform duration-300" />
+                                <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent opacity-50 pointer-events-none" />
+
+                                <Server size={28} strokeWidth={1.5} className="relative z-10" />
                                 <div className="text-center relative z-10">
                                     <span className="block font-medium text-sm">On-Premise (UNA)</span>
-                                    <span className="text-[10px] opacity-70">Network path</span>
+                                    <span className="text-[10px] opacity-70">Network path — available soon</span>
                                 </div>
-                                {sourceType === 'server' && (
-                                    <div className="absolute top-2 right-2 w-2.5 h-2.5 rounded-full bg-violet-400 shadow-[0_0_10px_rgba(167,139,250,0.8)] animate-pulse" />
-                                )}
                             </button>
                         </div>
                     </div>
@@ -276,47 +220,26 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, o
                             )}
                         </div>
 
-                        <div className="relative group flex gap-2">
-                            <div className="relative flex-1">
-                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-500 group-focus-within:text-brand-primary transition-colors">
-                                    <FolderOpen size={18} />
-                                </div>
-                                <input
-                                    type="text"
-                                    value={currentPath}
-                                    onChange={(e) => { setCurrentPath(e.target.value); setValidationStatus('idle'); }}
-                                    placeholder={sourceType === 'local' ? "e.g., C:\\Logs" : "e.g., \\\\Server\\Share\\Logs"}
-                                    className={cn(
-                                        "w-full bg-gray-950 border-2 rounded-xl pl-11 pr-4 py-3 text-sm text-gray-200 focus:outline-none transition-all placeholder:text-gray-700 font-mono",
-                                        validationStatus === 'error'
-                                            ? "border-red-900/50 focus:border-red-500 focus:ring-4 focus:ring-red-900/20"
-                                            : validationStatus === 'success'
-                                                ? "border-green-900/50 focus:border-green-500 focus:ring-4 focus:ring-green-900/20"
-                                                : "border-gray-800 focus:border-brand-primary focus:ring-4 focus:ring-brand-primary/10"
-                                    )}
-                                />
+                        <div className="relative group">
+                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-500 group-focus-within:text-brand-primary transition-colors">
+                                <FolderOpen size={18} />
                             </div>
-
-                            {sourceType === 'local' && (
-                                <>
-                                    <input
-                                        type="file"
-                                        ref={fileInputRef}
-                                        style={{ display: 'none' }}
-                                        webkitdirectory=""
-                                        {...({ directory: "" } as any)}
-                                        onChange={handleFileSelect}
-                                    />
-                                    <button
-                                        onClick={handleBrowseClick}
-                                        className="px-3 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-xl border border-gray-700 transition-colors font-medium text-sm whitespace-nowrap flex items-center gap-2"
-                                        title="Select a folder containing log files"
-                                    >
-                                        <FileText size={14} />
-                                        Browse
-                                    </button>
-                                </>
-                            )}
+                            <input
+                                type="text"
+                                value={currentPath}
+                                onChange={(e) => { setCurrentPath(e.target.value); setValidationStatus('idle'); }}
+                                placeholder={sourceType === 'local' ? "e.g., C:\\Logs" : "e.g., \\\\Server\\Share\\Logs"}
+                                disabled={sourceType === 'server'}
+                                className={cn(
+                                    "w-full bg-gray-950 border-2 rounded-xl pl-11 pr-4 py-3 text-sm text-gray-200 focus:outline-none transition-all placeholder:text-gray-700 font-mono",
+                                    sourceType === 'server' && "opacity-50 cursor-not-allowed",
+                                    validationStatus === 'error'
+                                        ? "border-red-900/50 focus:border-red-500 focus:ring-4 focus:ring-red-900/20"
+                                        : validationStatus === 'success'
+                                            ? "border-green-900/50 focus:border-green-500 focus:ring-4 focus:ring-green-900/20"
+                                            : "border-gray-800 focus:border-brand-primary focus:ring-4 focus:ring-brand-primary/10"
+                                )}
+                            />
                         </div>
 
                         {/* Error Message */}

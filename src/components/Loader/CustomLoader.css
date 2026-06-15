@@ -19,7 +19,7 @@
 .bg-particle {
     position: absolute;
     border-radius: 50%;
-    background: rgba(231, 76, 60, 0.1);
+    background: rgba(6, 182, 212, 0.1);
     animation: float 15s infinite ease-in-out;
 }
 
@@ -54,7 +54,7 @@
     left: 50%;
     transform: translate(-50%, -50%);
     border-radius: 50%;
-    border: 2px solid rgba(231, 76, 60, 0.5);
+    border: 2px solid rgba(67, 56, 202, 0.5);
 }
 
 .ring-1 { width: 110%; height: 110%; animation: pulseRing 2s ease-in-out infinite; }
@@ -81,7 +81,7 @@
     position: absolute;
     width: 40px;
     height: 40px;
-    background: rgba(231, 76, 60, 0.3);
+    background: rgba(67, 56, 202, 0.3);
     clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
 }
 
@@ -99,14 +99,14 @@
 .loader-logo {
     width: 100%;
     height: 100%;
-    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+    background: #100e1c;
     border-radius: 30px;
     display: flex;
     justify-content: center;
     align-items: center;
     position: relative;
     z-index: 5;
-    box-shadow: 0 0 40px rgba(231, 76, 60, 0.6);
+    box-shadow: 0 0 40px rgba(67, 56, 202, 0.6);
     animation: logoFloat 4s ease-in-out infinite, logoGlow 2s ease-in-out infinite;
 }
 
@@ -123,8 +123,8 @@
 }
 
 @keyframes logoGlow {
-    0%, 100% { box-shadow: 0 0 40px rgba(231, 76, 60, 0.6); }
-    50% { box-shadow: 0 0 60px rgba(231, 76, 60, 0.8), 0 0 120px rgba(231, 76, 60, 0.6); }
+    0%, 100% { box-shadow: 0 0 40px rgba(67, 56, 202, 0.6); }
+    50% { box-shadow: 0 0 60px rgba(6, 182, 212, 0.8), 0 0 120px rgba(67, 56, 202, 0.6); }
 }
 
 /* Orbiting dots */
@@ -146,7 +146,7 @@
 .orbit-1 .orbit-dot { top: -5px; left: 50%; transform: translateX(-50%); }
 
 .orbit-2 { animation-duration: 4s; animation-direction: reverse; }
-.orbit-2 .orbit-dot { top: 50%; right: -5px; transform: translateY(-50%); background: #e74c3c; box-shadow: 0 0 15px rgba(231, 76, 60, 0.8); }
+.orbit-2 .orbit-dot { top: 50%; right: -5px; transform: translateY(-50%); background: #06b6d4; box-shadow: 0 0 15px rgba(6, 182, 212, 0.8); }
 
 .orbit-3 { animation-duration: 5s; }
 .orbit-3 .orbit-dot { bottom: -5px; left: 50%; transform: translateX(-50%); background: rgba(255, 255, 255, 0.7); }
@@ -158,7 +158,7 @@
 
 .accent-circle {
     position: absolute; width: 200%; height: 200%; top: 50%; left: 50%; transform: translate(-50%, -50%);
-    border: 1px dashed rgba(231, 76, 60, 0.2); border-radius: 50%;
+    border: 1px dashed rgba(67, 56, 202, 0.2); border-radius: 50%;
     animation: rotateSlow 20s linear infinite;
 }
 @keyframes rotateSlow {
@@ -180,7 +180,7 @@
 
 .loader-loading-bar {
     height: 100%;
-    background: linear-gradient(90deg, #e74c3c 0%, #ff6b6b 25%, #e74c3c 50%, #c0392b 75%, #e74c3c 100%);
+    background: linear-gradient(90deg, #4338ca 0%, #06b6d4 25%, #4338ca 50%, #06b6d4 75%, #4338ca 100%);
     background-size: 200% 100%;
     border-radius: 20px;
     animation: loadingProgress 2.5s ease-in-out infinite, shimmer 2s linear infinite;
@@ -207,8 +207,8 @@
 }
 
 @keyframes textGlow {
-    0%, 100% { opacity: 1; text-shadow: 0 0 10px rgba(231, 76, 60, 0.5); }
-    50% { opacity: 0.8; text-shadow: 0 0 20px rgba(231, 76, 60, 0.8); }
+    0%, 100% { opacity: 1; text-shadow: 0 0 10px rgba(6, 182, 212, 0.5); }
+    50% { opacity: 0.8; text-shadow: 0 0 20px rgba(67, 56, 202, 0.8); }
 }
 
 .percentage {

@@ -7,6 +7,9 @@ export default {
   darkMode: "class",
   theme: {
     extend: {
+      fontFamily: {
+        michroma: ['Michroma', 'sans-serif'],
+      },
       colors: {
         brand: {
           bg: '#0B0F1A',
