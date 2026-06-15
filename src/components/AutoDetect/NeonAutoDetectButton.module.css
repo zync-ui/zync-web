@@ -1,0 +1,272 @@
+/* Neon Auto-Detect Button Styles */
+/* Cyber-themed animated button with rotating gradient border */
+
+.neon-button-wrapper {
+    position: relative;
+    display: inline-flex;
+}
+
+/* Outer glow effect */
+.neon-glow {
+    position: absolute;
+    inset: -2px;
+    background: linear-gradient(135deg, #a855f7 0%, #3b82f6 50%, #a855f7 100%);
+    border-radius: 14px;
+    opacity: 0.4;
+    filter: blur(8px);
+    transition: opacity 0.3s ease, filter 0.3s ease;
+    z-index: -1;
+}
+
+.neon-button-wrapper:hover .neon-glow {
+    opacity: 0.6;
+    filter: blur(12px);
+}
+
+/* Rotating border container */
+.rotating-border-container {
+    position: relative;
+    border-radius: 12px;
+    padding: 2px;
+    overflow: hidden;
+}
+
+/* Animated rotating gradient border */
+.rotating-border {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.rotating-border::before {
+    content: '';
+    position: absolute;
+    width: 600%;
+    height: 600%;
+    background: conic-gradient(
+        from 0deg,
+        #a855f7 0deg,
+        #3b82f6 60deg,
+        #ec4899 120deg,
+        transparent 180deg,
+        transparent 300deg,
+        #a855f7 360deg
+    );
+    animation: neon-rotate 3s linear infinite;
+}
+
+@keyframes neon-rotate {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Main button */
+.neon-button {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 12px 24px;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16162a 100%);
+    border: none;
+    border-radius: 10px;
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 100px;
+    overflow: hidden;
+}
+
+.neon-button:hover:not(:disabled) {
+    background: linear-gradient(135deg, #1f1f3a 0%, #1a1a32 100%);
+    transform: scale(1.02);
+}
+
+.neon-button:active:not(:disabled) {
+    transform: scale(0.98);
+}
+
+.neon-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+/* Button text gradient */
+.button-text {
+    background: linear-gradient(135deg, #ffffff 0%, #e0e0ff 50%, #ffffff 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-shadow: 0 0 20px rgba(168, 85, 247, 0.3);
+}
+
+/* Icon styling */
+.button-icon {
+    color: #a855f7;
+    filter: drop-shadow(0 0 8px rgba(168, 85, 247, 0.6));
+    transition: all 0.3s ease;
+}
+
+.neon-button:hover:not(:disabled) .button-icon {
+    color: #c084fc;
+    filter: drop-shadow(0 0 12px rgba(168, 85, 247, 0.8));
+    transform: scale(1.1);
+}
+
+/* Shimmer hover effect */
+.hover-shimmer {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(168, 85, 247, 0.2) 50%,
+        transparent 100%
+    );
+    transform: translateX(-100%);
+    transition: transform 1s ease-out;
+    pointer-events: none;
+    border-radius: 10px;
+}
+
+.neon-button:hover:not(:disabled) .hover-shimmer {
+    transform: translateX(100%);
+}
+
+/* Loading shimmer overlay */
+.shimmer-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(168, 85, 247, 0.2) 20%,
+        rgba(59, 130, 246, 0.3) 50%,
+        rgba(168, 85, 247, 0.2) 80%,
+        transparent 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer-load 1.5s ease-in-out infinite;
+    border-radius: 10px;
+    pointer-events: none;
+}
+
+@keyframes shimmer-load {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* Loading spinner */
+.loading-spinner {
+    width: 18px;
+    height: 18px;
+    border: 2px solid rgba(168, 85, 247, 0.3);
+    border-top-color: #a855f7;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Pulse ring on hover */
+.pulse-ring {
+    position: absolute;
+    inset: -4px;
+    border: 2px solid rgba(168, 85, 247, 0.3);
+    border-radius: 16px;
+    opacity: 0;
+    animation: pulse-ring-anim 2s ease-out infinite;
+}
+
+@keyframes pulse-ring-anim {
+    0% {
+        opacity: 0.6;
+        transform: scale(0.95);
+    }
+    50% {
+        opacity: 0.3;
+        transform: scale(1.02);
+    }
+    100% {
+        opacity: 0;
+        transform: scale(1.05);
+    }
+}
+
+/* Inline pulse indicator (like Load Logs button) */
+.inline-pulse {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 8px;
+    height: 8px;
+    margin-left: 6px;
+}
+
+.pulse-dot-ping {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: rgba(168, 85, 247, 0.6);
+    border-radius: 50%;
+    animation: inline-ping 1.5s ease-in-out infinite;
+}
+
+.pulse-dot-solid {
+    width: 6px;
+    height: 6px;
+    background: #a855f7;
+    border-radius: 50%;
+    box-shadow: 0 0 6px rgba(168, 85, 247, 0.8);
+}
+
+@keyframes inline-ping {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0;
+        transform: scale(1.8);
+    }
+}
+
+/* Success state */
+.neon-button-wrapper.success .neon-glow {
+    background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+}
+
+.neon-button-wrapper.success .rotating-border::before {
+    background: conic-gradient(
+        from 0deg,
+        #10b981 0deg,
+        #34d399 120deg,
+        transparent 180deg,
+        #10b981 360deg
+    );
+}
+
+/* Error state */
+.neon-button-wrapper.error .neon-glow {
+    background: linear-gradient(135deg, #ef4444 0%, #f87171 100%);
+}
+
+.neon-button-wrapper.error .rotating-border::before {
+    background: conic-gradient(
+        from 0deg,
+        #ef4444 0deg,
+        #f87171 120deg,
+        transparent 180deg,
+        #ef4444 360deg
+    );
+}
