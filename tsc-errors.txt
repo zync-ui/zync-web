@@ -1,3 +1,0 @@
-﻿src/components/Filter/FilterPanel.tsx(2,37): error TS6133: 'Pause' is declared but its value is never read.
-src/components/Filter/FilterPanel.tsx(122,17): error TS6133: 'onSourceTypeChange' is declared but its value is never read.
-src/components/Settings/SettingsModal.tsx(43,12): error TS6133: 'browseSupported' is declared but its value is never read.

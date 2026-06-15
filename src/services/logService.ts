@@ -1,5 +1,4 @@
-export const API_BASE_URL = 'http://localhost:5238/api';
-// export const API_BASE_URL = 'https://gislog-api.onrender.com/api';
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5238/api';
 import { logSourceService } from './logSourceService';
 
 // Exception information structure matching backend

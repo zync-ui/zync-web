@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import './CustomLoader.css';
-import loaderLogo from '../../assets/loader_logo.png';
+import zyncLogo from '../../assets/zync-logo.png';
 
 export const CustomLoader = () => {
     const [dots, setDots] = useState('');
@@ -46,7 +46,7 @@ export const CustomLoader = () => {
                     </div>
 
                     <div className="loader-logo">
-                        <img src={loaderLogo} alt="Loading Logo" />
+                        <img src={zyncLogo} alt="Zync log" />
                     </div>
                 </div>
 

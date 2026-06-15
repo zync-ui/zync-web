@@ -15,7 +15,7 @@ import { JumpToNextErrorButton, LogStatsPanel } from '../components/LogStatsPane
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 import { ChevronDown, Loader2, Search, RotateCw, X, Play, FolderClosed, HardDrive, Server, Calendar, Download } from 'lucide-react';
 import { cn } from '../lib/utils';
-import gislenLogo from '../assets/gislen_logo.png';
+import zyncLogo from '../assets/zync-logo.png';
 import noLogsFound from '../assets/Not_Found.svg';
 
 const PAGE_SIZE = 5000; // Optimized for streaming
@@ -403,9 +403,9 @@ export const LogDashboard: React.FC = () => {
                 <div className="flex gap-3 px-6 h-[60px] items-center flex-wrap w-full">
                     {/* Logo */}
                     <div className="flex items-center gap-3">
-                        <img src={gislenLogo} alt="Gislen Logo" className="h-[50px] w-auto" />
-                        <h1 className="text-3xl font-bold text-gray-100 tracking-tight mr-4">
-                            Gis<span className="text-[rgb(234,60,60)]">Log</span>
+                        <img src={zyncLogo} alt="Zync log" className="h-[50px] w-auto" />
+                        <h1 className="font-michroma text-2xl font-normal text-gray-100 tracking-tight mr-4">
+                            Zync <span className="text-brand-secondary font-bold">log</span>
                         </h1>
                     </div>
 
