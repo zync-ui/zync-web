@@ -5,7 +5,6 @@ export class StreamingService {
     private eventSource: EventSource | null = null;
     private subscribers: Map<string, (data: any) => void> = new Map();
     private buffer: LogEntry[] = [];
-    private bufferSize = 10000;
     private isStreaming = false;
 
     // Subscribe to log stream
@@ -25,6 +24,8 @@ export class StreamingService {
     } = {}) {
         if (this.isStreaming) return;
 
+        this.clearBuffer();
+
         const params = new URLSearchParams();
         if (options.date) params.append('date', options.date);
         if (options.level) params.append('level', options.level);
@@ -38,13 +39,8 @@ export class StreamingService {
         this.eventSource.onmessage = (event) => {
             const data = JSON.parse(event.data);
             
-            // Add to buffer
+            // Add to buffer (no size cap — keep full stream count)
             this.buffer.push(...data.logs);
-            
-            // Maintain buffer size
-            if (this.buffer.length > this.bufferSize) {
-                this.buffer = this.buffer.slice(-this.bufferSize);
-            }
 
             // Notify subscribers
             this.subscribers.forEach(callback => callback({

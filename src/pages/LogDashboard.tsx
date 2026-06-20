@@ -28,8 +28,6 @@ export const LogDashboard: React.FC = () => {
     const [loadingDates, setLoadingDates] = useState(false);
     const [hasMore, setHasMore] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [isStreaming, setIsStreaming] = useState(false);
-    const [streamProgress, setStreamProgress] = useState(0);
 
     const [search, setSearch] = useState('');
     const [level, setLevel] = useState('');
@@ -115,8 +113,6 @@ export const LogDashboard: React.FC = () => {
         setError(null);
         setLogs([]);
         setFilteredLogs([]);
-        setIsStreaming(true);
-        setStreamProgress(0);
 
         try {
             const source = getCurrentSource();
@@ -133,7 +129,6 @@ export const LogDashboard: React.FC = () => {
             const unsubscribe = streamingService.subscribe('dashboard', (data) => {
                 setLogs(prev => {
                     const updated = [...prev, ...data.logs];
-                    setStreamProgress(data.total);
                     return updated;
                 });
                 setFilteredLogs(prev => [...prev, ...data.logs]);
@@ -141,7 +136,6 @@ export const LogDashboard: React.FC = () => {
 
                 if (!data.hasMore) {
                     // Stream fully complete — hide loader now
-                    setIsStreaming(false);
                     setLoading(false);
                     streamingService.stopStream();
                 }
@@ -155,7 +149,6 @@ export const LogDashboard: React.FC = () => {
 
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to start log streaming');
-            setIsStreaming(false);
             setLoading(false);
         }
     }, [selectedDate, getCurrentSource, level, search]);
@@ -405,7 +398,7 @@ export const LogDashboard: React.FC = () => {
                     <div className="flex items-center gap-3">
                         <img src={zyncLogo} alt="Zync log" className="h-[50px] w-auto" />
                         <h1 className="font-michroma text-2xl font-normal text-gray-100 tracking-tight mr-4">
-                            Zync <span className="text-brand-secondary font-bold">log</span>
+                            Zync <span className="text-cyan-400 font-bold drop-shadow-[0_0_8px_rgba(34,211,238,0.8)]">log</span>
                         </h1>
                     </div>
 
@@ -559,10 +552,7 @@ export const LogDashboard: React.FC = () => {
                 <FilterPanel
                     level={level}
                     onLevelChange={setLevel}
-                    totalLogs={logs.length}
-                    visibleLogs={filteredLogs.length}
-                    isStreaming={isStreaming}
-                    streamProgress={streamProgress}
+                    logs={logs}
                 />
             </header>
 
@@ -585,7 +575,7 @@ export const LogDashboard: React.FC = () => {
                     <LogStatsPanel logs={filteredLogs} />
                 )}
 
-                <div className="bg-gray-900/30 rounded-lg border border-gray-800 backdrop-blur-sm h-[calc(100vh-340px)] overflow-hidden shadow-2xl relative">
+                <div className="bg-gray-900/30 rounded-lg border border-gray-800 backdrop-blur-sm h-[calc(100vh-260px)] overflow-hidden shadow-2xl relative">
                     {filteredLogs.length === 0 && !loading ? (
                         <div className="h-full flex flex-col items-center justify-center text-gray-500">
                             <img src={noLogsFound} width={300} alt="No Logs Found" className="mb-4" />
@@ -597,7 +587,7 @@ export const LogDashboard: React.FC = () => {
                             style={{ height: '100%' }}
                             data={filteredLogs}
                             itemContent={(index, log) => (
-                                <div className={`px-2 pt-2 ${focusedIndex === index ? 'bg-blue-900/20 -mx-2 px-4 shadow-lg ring-1 ring-blue-500/30' : ''}`}>
+                                <div className={`px-2 pt-1 ${focusedIndex === index ? 'bg-blue-900/20 -mx-2 px-4 shadow-lg ring-1 ring-blue-500/30' : ''}`}>
                                     <LogEntryRow
                                         key={`${log.timestamp}-${index}`}
                                         entry={log}

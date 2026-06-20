@@ -231,31 +231,6 @@ export const LogStatsPanel: React.FC<LogStatsProps> = ({ logs }) => {
 
     return (
         <div className="flex flex-col gap-3 px-6 py-3 bg-gray-900/30 border-b border-gray-800">
-            {/* Stats Row */}
-            <div className="flex items-center justify-between">
-                <LogStatsBadge counts={counts} />
-
-                {/* Legend */}
-                <div className="hidden md:flex items-center gap-4 text-[10px] text-gray-500">
-                    <div className="flex items-center gap-1">
-                        <div className="w-2 h-2 rounded-full bg-blue-500" />
-                        <span>Info</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                        <div className="w-2 h-2 rounded-full bg-purple-500" />
-                        <span>Debug</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                        <div className="w-2 h-2 rounded-full bg-amber-500" />
-                        <span>Warning</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                        <div className="w-2 h-2 rounded-full bg-red-500" />
-                        <span>Error</span>
-                    </div>
-                </div>
-            </div>
-
             {/* Heatmap Bar */}
             <LogHeatmapBar counts={counts} />
         </div>

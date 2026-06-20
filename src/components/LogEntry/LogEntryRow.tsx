@@ -124,7 +124,7 @@ const DEFAULT_STYLE = {
     displayName: 'Unknown',
 };
 
-const getLevelStyle = (level: string) => {
+export const getLevelStyle = (level: string) => {
     const normalized = level?.toUpperCase() || '';
     return LEVEL_STYLES[normalized] || DEFAULT_STYLE;
 };
@@ -140,7 +140,7 @@ const HIGHLIGHT_KEYWORDS = [
     'request', 'response', 'status', 'http', 'api',
 ];
 
-const highlightMessage = (message: string): React.ReactNode => {
+export const highlightMessage = (message: string): React.ReactNode => {
     if (!message) return null;
 
     // Build regex from keywords
@@ -175,7 +175,7 @@ interface JsonTreeProps {
     isLast?: boolean;
 }
 
-const JsonTree: React.FC<JsonTreeProps> = memo(({ data, level = 0, isLast = true }) => {
+export const JsonTree: React.FC<JsonTreeProps> = memo(({ data, level = 0, isLast = true }) => {
     const [collapsed, setCollapsed] = useState(level > 1);
 
     const indent = level * 16;
@@ -285,7 +285,7 @@ interface ExceptionViewerProps {
     exception: ExceptionInfo;
 }
 
-const ExceptionViewer: React.FC<ExceptionViewerProps> = memo(({ exception }) => {
+export const ExceptionViewer: React.FC<ExceptionViewerProps> = memo(({ exception }) => {
     const [showStack, setShowStack] = useState(false);
     const [copied, setCopied] = useState(false);
 
@@ -341,7 +341,7 @@ const ExceptionViewer: React.FC<ExceptionViewerProps> = memo(({ exception }) => 
                                     <Copy size={12} className="text-gray-400" />
                                 )}
                             </button>
-                            <pre className="text-[10px] text-red-200/70 font-mono overflow-x-auto whitespace-pre-wrap bg-red-950/30 p-3 pr-10 rounded-lg border border-red-900/30 max-h-48 overflow-y-auto">
+                            <pre className="text-[10px] text-red-200/70 font-mono overflow-x-auto whitespace-pre-wrap bg-red-950/30 p-3 pr-10 rounded-lg border border-red-900/30 overflow-y-visible">
                                 {exception.stackTrace}
                             </pre>
                         </div>
@@ -371,8 +371,6 @@ interface PropertiesSectionProps {
 }
 
 const PropertiesSection: React.FC<PropertiesSectionProps> = memo(({ properties }) => {
-    const [expanded, setExpanded] = useState(false);
-
     const entries = Object.entries(properties);
     if (entries.length === 0) return null;
 
@@ -384,26 +382,8 @@ const PropertiesSection: React.FC<PropertiesSectionProps> = memo(({ properties }
     if (filteredEntries.length === 0) return null;
 
     return (
-        <div>
-            <button
-                onClick={(e) => {
-                    e.stopPropagation();
-                    setExpanded(!expanded);
-                }}
-                className="flex items-center gap-1 text-[10px] text-gray-500 hover:text-gray-300 transition-colors uppercase tracking-wider mb-2"
-            >
-                <ChevronDown
-                    size={10}
-                    className={cn("transition-transform", expanded && "rotate-180")}
-                />
-                Properties ({filteredEntries.length})
-            </button>
-
-            {expanded && (
-                <div className="bg-gray-950/50 rounded-lg border border-gray-800/50 p-3 font-mono text-[11px] max-h-48 overflow-auto">
-                    <JsonTree data={Object.fromEntries(filteredEntries)} />
-                </div>
-            )}
+        <div className="bg-gray-950/50 rounded-lg border border-gray-800/50 p-3 font-mono text-[11px] overflow-hidden">
+            <JsonTree data={Object.fromEntries(filteredEntries)} />
         </div>
     );
 });
@@ -414,8 +394,12 @@ PropertiesSection.displayName = 'PropertiesSection';
 // MAIN LOG ENTRY ROW COMPONENT
 // ============================================
 
+import { LogDetailModal } from './LogDetailModal';
+import { Maximize2 } from 'lucide-react';
+
 export const LogEntryRow: React.FC<LogEntryRowProps> = memo(({ entry, onCorrelationClick }) => {
     const [expanded, setExpanded] = useState(false);
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
     const levelStyle = useMemo(() => getLevelStyle(entry.level), [entry.level]);
 
@@ -497,7 +481,7 @@ export const LogEntryRow: React.FC<LogEntryRowProps> = memo(({ entry, onCorrelat
             {/* Main content wrapper */}
             <div className="pl-4">
                 {/* HEADER SECTION */}
-                <div className="flex items-center gap-2.5 py-2 px-3 flex-wrap">
+                <div className="flex items-center gap-2.5 py-1 px-3 flex-wrap">
                     {/* Expand/Collapse indicator */}
                     <div className={cn(
                         "text-gray-500 group-hover:text-white transition-all duration-200",
@@ -583,12 +567,12 @@ export const LogEntryRow: React.FC<LogEntryRowProps> = memo(({ entry, onCorrelat
                 </div>
 
                 {/* MESSAGE PREVIEW */}
-                <div className="px-3 pb-2">
+                <div className="px-3 pb-1">
                     <p className={cn(
-                        "text-sm text-gray-300 font-mono leading-relaxed",
-                        !expanded && "line-clamp-1"
+                        "text-sm text-gray-300 font-mono leading-relaxed whitespace-pre-wrap break-words",
+                        !expanded && "line-clamp-3"
                     )}>
-                        {highlightMessage(entry.message)}
+                        {highlightMessage(entry.message || entry.raw || '')}
                     </p>
                 </div>
 
@@ -629,6 +613,17 @@ export const LogEntryRow: React.FC<LogEntryRowProps> = memo(({ entry, onCorrelat
                                         </div>
                                     </div>
                                 </div>
+
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setIsModalOpen(true);
+                                    }}
+                                    className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-colors border border-white/10 flex items-center gap-2 text-xs font-medium"
+                                >
+                                    <Maximize2 size={14} />
+                                    <span className="hidden sm:inline">Open in Popup</span>
+                                </button>
                             </div>
 
                             {/* 2. Metadata Badges Row */}
@@ -686,8 +681,8 @@ export const LogEntryRow: React.FC<LogEntryRowProps> = memo(({ entry, onCorrelat
                                     <FileText size={12} />
                                     Message
                                 </h4>
-                                <div className="p-5 rounded-xl bg-black/40 border border-white/5 text-gray-200 font-mono text-sm leading-relaxed shadow-inner overflow-x-auto">
-                                    {highlightMessage(entry.message)}
+                                <div className="p-5 rounded-xl bg-black/40 border border-white/5 text-gray-200 font-mono text-sm leading-relaxed shadow-inner overflow-x-auto whitespace-pre-wrap break-words">
+                                    {highlightMessage(entry.message || entry.raw || '')}
                                 </div>
                             </div>
 
@@ -774,24 +769,28 @@ export const LogEntryRow: React.FC<LogEntryRowProps> = memo(({ entry, onCorrelat
                                 </div>
                             )}
 
-                            {/* Raw Log Toggle */}
+                            {/* Raw Log */}
                             {entry.raw && (
-                                <details className="group pt-2 border-t border-white/5">
-                                    <summary className="list-none flex items-center gap-2 cursor-pointer text-xs font-medium text-gray-500 hover:text-gray-300 transition-colors py-2 selection:bg-none">
-                                        <div className="p-1 rounded bg-white/5 group-hover:bg-white/10 transition-colors">
-                                            <ChevronRight size={12} className="transform group-open:rotate-90 transition-transform duration-200" />
-                                        </div>
-                                        <span>View Raw Log Data</span>
-                                    </summary>
-                                    <div className="mt-2 bg-black/60 rounded-xl p-3 border border-white/5 font-mono text-[10px] text-gray-400 break-all whitespace-pre-wrap max-h-40 overflow-auto shadow-inner text-pretty">
+                                <div className="space-y-3 pt-2 border-t border-white/5">
+                                    <h4 className="text-xs font-bold uppercase tracking-widest text-gray-500 flex items-center gap-2">
+                                        <Code2 size={12} />
+                                        Raw Log Data
+                                    </h4>
+                                    <div className="bg-black/60 rounded-xl p-3 border border-white/5 font-mono text-[10px] text-gray-400 break-all whitespace-pre-wrap shadow-inner text-pretty overflow-y-visible">
                                         {entry.raw}
                                     </div>
-                                </details>
+                                </div>
                             )}
                         </div>
                     </div>
                 )}
             </div>
+
+            <LogDetailModal 
+                isOpen={isModalOpen} 
+                onClose={() => setIsModalOpen(false)} 
+                entry={entry} 
+            />
         </div>
     );
 });

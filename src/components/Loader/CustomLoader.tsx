@@ -55,7 +55,7 @@ export const CustomLoader = () => {
                         <div className="loader-loading-bar"></div>
                     </div>
 
-                    <div className="loading-text">LOADING<span className="dots">{dots}</span></div>
+                    <div className="loading-text font-michroma">LOADING<span className="dots">{dots}</span></div>
                 </div>
             </div>
         </div>
