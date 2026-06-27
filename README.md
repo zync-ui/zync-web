@@ -1,9 +1,8 @@
 # Zync Log Web Client
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/f5052161-5a92-407e-b067-fabfe92578da" alt="Zync Log" height="100" />
+  <img src="src/assets/logo.png" alt="Zync Log" height="100" />
 </p>
-
 
 A high-performance, modern, and beautiful web interface for viewing and searching local application logs. Built with React, TypeScript, Vite, and Tailwind CSS.
 
@@ -26,17 +25,21 @@ A high-performance, modern, and beautiful web interface for viewing and searchin
 ## Development
 
 Install dependencies:
+
 ```bash
 npm install
 ```
 
 Start the development server:
+
 ```bash
 npm run dev
 ```
 
 Build the production assets:
+
 ```bash
 npm run build
 ```
+
 This compiles TypeScript files and builds the optimized frontend bundle into the `dist/` directory, ready to be served by the `zync-api` backend.
