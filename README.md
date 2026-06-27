@@ -1,5 +1,10 @@
 # Zync Log Web Client
 
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/f5052161-5a92-407e-b067-fabfe92578da" alt="Zync Log" height="100" />
+</p>
+
+
 A high-performance, modern, and beautiful web interface for viewing and searching local application logs. Built with React, TypeScript, Vite, and Tailwind CSS.
 
 ## Features
