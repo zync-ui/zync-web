@@ -134,9 +134,12 @@ export const LogDashboard: React.FC = () => {
                 setFilteredLogs(prev => [...prev, ...data.logs]);
                 setHasMore(data.hasMore);
 
-                if (!data.hasMore) {
-                    // Stream fully complete — hide loader now
+                // Hide loading overlay as soon as first logs arrive or stream finishes
+                if (data.logs.length > 0 || !data.hasMore) {
                     setLoading(false);
+                }
+
+                if (!data.hasMore) {
                     streamingService.stopStream();
                 }
             });
@@ -464,8 +467,8 @@ export const LogDashboard: React.FC = () => {
                     </div>
                 )}
 
-                {/* Show loader overlay during any loading state */}
-                {loading && (
+                {/* Show loader overlay only when no logs are loaded yet */}
+                {loading && logs.length === 0 && (
                     <div className="fixed inset-0 z-50 bg-brand-bg/50 backdrop-blur-sm">
                         <CustomLoader />
                     </div>
