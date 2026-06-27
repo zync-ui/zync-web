@@ -1,30 +1,37 @@
-# React + TypeScript + Vite
+# Zync Log Web Client
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A high-performance, modern, and beautiful web interface for viewing and searching local application logs. Built with React, TypeScript, Vite, and Tailwind CSS.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Real-time Streaming**: Seamlessly stream incoming logs using Server-Sent Events (SSE).
+- **Advanced Filtering**: Filter logs by levels (Debug, Info, Warning, Error, Fatal), date ranges, and custom queries.
+- **High Performance**: Renders hundreds of thousands of log entries smoothly using virtual list scrolling (`react-virtuoso`).
+- **Interactive Details**: Expand log rows to view full structured payloads and metadata details.
+- **Aesthetic UI**: A premium dark-themed interface built with Tailwind CSS, custom loaders, and smooth micro-animations powered by Framer Motion.
 
-## Expanding the ESLint configuration
+## Technical Stack
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+- **Framework**: [React 18](https://react.dev/) + [Vite](https://vitejs.dev/)
+- **Language**: [TypeScript](https://www.typescriptlang.org/)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
+- **Icons**: [Lucide React](https://lucide.dev/)
+- **Animations**: [Framer Motion](https://www.framer.com/motion/)
 
-- Configure the top-level `parserOptions` property like this:
+## Development
 
-```js
-export default {
-  // other rules...
-  parserOptions: {
-    ecmaVersion: 'latest',
-    sourceType: 'module',
-    project: ['./tsconfig.json', './tsconfig.node.json'],
-    tsconfigRootDir: __dirname,
-  },
-}
+Install dependencies:
+```bash
+npm install
 ```
 
-- Replace `plugin:@typescript-eslint/recommended` to `plugin:@typescript-eslint/recommended-type-checked` or `plugin:@typescript-eslint/strict-type-checked`
-- Optionally add `plugin:@typescript-eslint/stylistic-type-checked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and add `plugin:react/recommended` & `plugin:react/jsx-runtime` to the `extends` list
+Start the development server:
+```bash
+npm run dev
+```
+
+Build the production assets:
+```bash
+npm run build
+```
+This compiles TypeScript files and builds the optimized frontend bundle into the `dist/` directory, ready to be served by the `zync-api` backend.

@@ -1,5 +1,8 @@
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5238/api';
+import { API_BASE_URL } from '../config/constants';
 import { logSourceService } from './logSourceService';
+
+// Re-export so existing consumers do not need to change their import path.
+export { API_BASE_URL };
 
 // Exception information structure matching backend
 export interface ExceptionInfo {

@@ -1,4 +1,5 @@
-import { API_BASE_URL, LogEntry } from './logService';
+import { API_BASE_URL } from '../config/constants';
+import type { LogEntry } from './logService';
 
 /**
  * Auto-detect service for discovering and loading log files.

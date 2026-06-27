@@ -1,4 +1,5 @@
-import { API_BASE_URL, LogEntry } from './logService';
+import { API_BASE_URL } from '../config/constants';
+import type { LogEntry } from './logService';
 
 export type LogSourceType = 'local' | 'server';
 
@@ -110,7 +111,6 @@ export const logSourceService = {
         }
 
         const data = await response.json();
-        console.log('API Response:', data);
         return data.logs || [];
     },
 

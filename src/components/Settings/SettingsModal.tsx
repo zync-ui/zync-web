@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { X, AlertCircle, FileText, Calendar, Info, CheckCircle, Folder, HardDrive, Server, FolderOpen, Loader, Save } from 'lucide-react';
+import { z } from 'zod';
 import { cn } from '../../lib/utils';
 import { logSourceService, LogSource, LogSourceType } from '../../services/logSourceService';
 import { CustomLoader } from '../Loader/CustomLoader';
+import { DEFAULT_LOCAL_LOG_PATH } from '../../config/constants';
 
 interface SettingsModalProps {
     isOpen: boolean;
@@ -10,15 +12,53 @@ interface SettingsModalProps {
     onSave: () => void;
 }
 
-// Default log path
-const DEFAULT_LOCAL_PATH = 'C:\\Logs';
+// Default log path (pulled from shared constants)
+const DEFAULT_LOCAL_PATH = DEFAULT_LOCAL_LOG_PATH;
+
+// Zod schema for validating configuration settings
+const settingsSchema = z.object({
+    sourceType: z.enum(['local', 'server']),
+    localPath: z.string().trim(),
+    serverPath: z.string().trim(),
+}).superRefine((data, ctx) => {
+    if (data.sourceType === 'local') {
+        if (!data.localPath) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: "Local folder path is required. Please select or enter a valid directory.",
+                path: ['localPath']
+            });
+        } else if (!/^[a-zA-Z]:[\\/]/.test(data.localPath)) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: "Invalid drive path format. Path must start with a drive letter (e.g., D:\\Project\\Log or C:\\Logs).",
+                path: ['localPath']
+            });
+        }
+    } else {
+        if (!data.serverPath) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: "UNC network path is required for on-premise server source.",
+                path: ['serverPath']
+            });
+        } else if (!/^\\\\[a-zA-Z0-9-._]+[\\/]/.test(data.serverPath)) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: "Invalid UNC path format (e.g., \\\\ServerName\\Share\\Logs).",
+                path: ['serverPath']
+            });
+        }
+    }
+});
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, onSave }) => {
     const [sourceType, setSourceType] = useState<LogSourceType>('local');
     const [localPath, setLocalPath] = useState(DEFAULT_LOCAL_PATH);
     const [serverPath, setServerPath] = useState('');
     const [detectedDates, setDetectedDates] = useState<string[]>([]);
-        const [isValidating, setIsValidating] = useState(false);
+    const [isValidating, setIsValidating] = useState(false);
+    const [isBrowsing, setIsBrowsing] = useState(false);
     const [validationStatus, setValidationStatus] = useState<'idle' | 'success' | 'error'>('idle');
     const [errorMessage, setErrorMessage] = useState('');
 
@@ -36,7 +76,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, o
             setValidationStatus('idle');
             setErrorMessage('');
             setDetectedDates([]);
-                    }
+        }
     }, [isOpen]);
 
     const currentPath = sourceType === 'local' ? localPath : serverPath;
@@ -48,22 +88,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, o
         }
     };
 
-    const validatePathFormat = (p: string, type: LogSourceType): boolean => {
-        if (!p.trim()) return false;
-        if (type === 'local') {
-            return /^[a-zA-Z]:[\\/]/.test(p);
-        } else {
-            return /^\\\\[a-zA-Z0-9-._]+[\\/]/.test(p);
-        }
-    };
-
     const handleTestConnection = async () => {
-        const path = currentPath;
-        if (!validatePathFormat(path, sourceType)) {
+        // Run Zod validation
+        const result = settingsSchema.safeParse({ sourceType, localPath, serverPath });
+        if (!result.success) {
+            const firstIssue = result.error.issues[0];
             setValidationStatus('error');
-            setErrorMessage(sourceType === 'local'
-                ? "Invalid path format (e.g., C:\\Logs)"
-                : "Invalid UNC path format (e.g., \\\\Server\\Share\\Logs)");
+            setErrorMessage(firstIssue.message);
             return;
         }
 
@@ -73,18 +104,15 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, o
         setDetectedDates([]);
         
         try {
-            // Strip filename if the path points to a file
-            let pathToSend = path;
-            if (path.toLowerCase().endsWith('.txt') || path.toLowerCase().endsWith('.log')) {
-                const lastSlash = path.lastIndexOf('\\');
+            let pathToSend = currentPath;
+            if (pathToSend.toLowerCase().endsWith('.txt') || pathToSend.toLowerCase().endsWith('.log')) {
+                const lastSlash = pathToSend.lastIndexOf('\\');
                 if (lastSlash > -1) {
-                    pathToSend = path.substring(0, lastSlash);
+                    pathToSend = pathToSend.substring(0, lastSlash);
                 }
             }
 
             const source: LogSource = { type: sourceType, path: pathToSend };
-
-            // Fetch available dates
             const dates = await logSourceService.getAvailableDates(source);
 
             if (dates.length > 0) {
@@ -103,8 +131,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, o
     };
 
     const handleSave = () => {
+        // Run Zod validation
+        const result = settingsSchema.safeParse({ sourceType, localPath, serverPath });
+        if (!result.success) {
+            const firstIssue = result.error.issues[0];
+            setValidationStatus('error');
+            setErrorMessage(firstIssue.message);
+            return;
+        }
+
         let finalPath = currentPath;
-        // Strip filename if present
         if (finalPath.toLowerCase().endsWith('.txt') || finalPath.toLowerCase().endsWith('.log')) {
             const lastSlash = finalPath.lastIndexOf('\\');
             if (lastSlash > -1) {
@@ -112,7 +148,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, o
             }
         }
 
-        // Save configuration
         const source: LogSource = { type: sourceType, path: finalPath };
         logSourceService.saveSource(source);
 
@@ -120,12 +155,39 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, o
         onClose();
     };
 
+    const handleBrowse = async () => {
+        try {
+            setIsBrowsing(true);
+            const response = await fetch('/api/system/pick-folder');
+
+            if (!response.ok) {
+                const err = await response.json().catch(() => ({ error: 'Unknown error' }));
+                setValidationStatus('error');
+                setErrorMessage(err.error ?? 'Failed to open folder picker.');
+                return;
+            }
+
+            const result: { path: string | null; cancelled: boolean } = await response.json();
+
+            if (!result.cancelled && result.path) {
+                setCurrentPath(result.path);
+                setValidationStatus('idle');
+                setErrorMessage('');
+            }
+        } catch {
+            setValidationStatus('error');
+            setErrorMessage('Could not reach the backend to open the folder picker. Make sure the API is running.');
+        } finally {
+            setIsBrowsing(false);
+        }
+    };
+
     const handleSourceTypeChange = (type: LogSourceType) => {
         setSourceType(type);
         setValidationStatus('idle');
         setErrorMessage('');
         setDetectedDates([]);
-            };
+    };
 
     if (!isOpen) return null;
 
@@ -231,7 +293,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, o
                                 placeholder={sourceType === 'local' ? "e.g., C:\\Logs" : "e.g., \\\\Server\\Share\\Logs"}
                                 disabled={sourceType === 'server'}
                                 className={cn(
-                                    "w-full bg-gray-950 border-2 rounded-xl pl-11 pr-4 py-3 text-sm text-gray-200 focus:outline-none transition-all placeholder:text-gray-700 font-mono",
+                                    "w-full bg-gray-950 border-2 rounded-xl pl-11 pr-28 py-3 text-sm text-gray-200 focus:outline-none transition-all placeholder:text-gray-700 font-mono",
                                     sourceType === 'server' && "opacity-50 cursor-not-allowed",
                                     validationStatus === 'error'
                                         ? "border-red-900/50 focus:border-red-500 focus:ring-4 focus:ring-red-900/20"
@@ -240,6 +302,28 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, o
                                             : "border-gray-800 focus:border-brand-primary focus:ring-4 focus:ring-brand-primary/10"
                                 )}
                             />
+                            {/* Browse button — opens native OS folder picker */}
+                            {sourceType === 'local' && (
+                                <button
+                                    type="button"
+                                    onClick={handleBrowse}
+                                    disabled={isBrowsing}
+                                    title="Browse for folder"
+                                    className="absolute inset-y-0 right-0 flex items-center gap-1.5 px-3 mr-1 my-1 rounded-lg text-xs font-medium text-cyan-300 bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/20 hover:border-cyan-400/40 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {isBrowsing ? (
+                                        <>
+                                            <Loader size={13} className="animate-spin text-cyan-300" />
+                                            <span>Browsing...</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <FolderOpen size={13} />
+                                            <span>Browse</span>
+                                        </>
+                                    )}
+                                </button>
+                            )}
                         </div>
 
                         {/* Error Message */}

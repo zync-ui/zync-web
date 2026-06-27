@@ -5,7 +5,16 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   server: {
-    host: "0.0.0.0",
-    port: 10000
-  }
+    host: '0.0.0.0',
+    port: 10000,
+    proxy: {
+      // Forward all /api requests to the .NET backend during development.
+      // This avoids CORS issues and ensures the Vite dev server never
+      // intercepts API calls with its own HTML fallback handler.
+      '/api': {
+        target: 'http://localhost:4521',
+        changeOrigin: true,
+      },
+    },
+  },
 })

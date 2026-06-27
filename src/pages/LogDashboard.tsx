@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { logService, LogEntry, API_BASE_URL } from '../services/logService';
+import { logService, LogEntry } from '../services/logService';
+import { API_BASE_URL, LIVE_POLL_INTERVAL_MS, PAGE_SIZE } from '../config/constants';
 import { logSourceService, LogSourceType, LogSource } from '../services/logSourceService';
 import { DiscoveredLogFile } from '../services/autoDetectService';
 import { backgroundWorker } from '../services/backgroundWorker';
@@ -13,12 +14,11 @@ import { CustomLoader } from '../components/Loader/CustomLoader';
 import { Toast, ToastType } from '../components/Toast';
 import { JumpToNextErrorButton, LogStatsPanel } from '../components/LogStatsPanel';
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
-import { ChevronDown, Loader2, Search, RotateCw, X, Play, FolderClosed, HardDrive, Server, Calendar, Download } from 'lucide-react';
+import { ChevronDown, Loader2, Search, RotateCw, X, Play, FolderClosed, HardDrive, Server, Calendar } from 'lucide-react';
 import { cn } from '../lib/utils';
 import zyncLogo from '../assets/zync-logo.png';
 import noLogsFound from '../assets/Not_Found.svg';
 
-const PAGE_SIZE = 5000; // Optimized for streaming
 
 export const LogDashboard: React.FC = () => {
     const [logs, setLogs] = useState<LogEntry[]>([]);
@@ -89,8 +89,8 @@ export const LogDashboard: React.FC = () => {
             const dates = await logSourceService.getAvailableDates(effectiveSource);
             setAvailableDates(dates);
             // Auto-select the most recent date if none selected
-            if (dates.length > 0 && !selectedDate) {
-                setSelectedDate(dates[0]);
+            if (dates.length > 0) {
+                setSelectedDate(prev => prev || dates[0]);
             }
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'Failed to fetch available dates';
@@ -99,7 +99,7 @@ export const LogDashboard: React.FC = () => {
         } finally {
             setLoadingDates(false);
         }
-    }, [getCurrentSource, selectedDate]);
+    }, [getCurrentSource]);
 
     // Fast streaming log loading
     const loadLogsByDateStream = useCallback(async () => {
@@ -152,85 +152,6 @@ export const LogDashboard: React.FC = () => {
             setLoading(false);
         }
     }, [selectedDate, getCurrentSource, level, search]);
-
-    // Load logs for the selected date
-    // const loadLogsByDate = useCallback(async () => {
-    //     if (!selectedDate) return;
-
-    //     setLoading(true);
-    //     setError(null);
-    //     setLogs([]);
-    //     const startTime = Date.now();
-
-    //     try {
-    //         const source = getCurrentSource();
-    //         const data = await logSourceService.loadLogs({ source, date: selectedDate });
-
-    //         // Ensure minimum loader duration for better UX
-    //         const elapsed = Date.now() - startTime;
-    //         if (elapsed < MIN_LOADER_DURATION) {
-    //             await new Promise(resolve => setTimeout(resolve, MIN_LOADER_DURATION - elapsed));
-    //         }
-
-    //         setLogs(data);
-    //         setFilteredLogs(data);
-    //         setHasMore(false); // Date-based loading fetches all logs for that day
-    //     } catch (err) {
-    //         setError(err instanceof Error ? err.message : 'Failed to load logs');
-    //     } finally {
-    //         setLoading(false);
-    //     }
-    // }, [selectedDate, getCurrentSource]);
-
-    // Legacy fetch for refresh and live mode
-    // const fetchLogs = useCallback(async (reset = true) => {
-    //     if (reset) {
-    //         setLoading(true);
-    //         setLogs([]);
-    //     }
-    //     setError(null);
-    //     const startTime = Date.now();
-
-    //     try {
-    //         const hasSearch = !!search;
-    //         const hasLevel = !!level;
-    //         const start = startDate ? new Date(startDate) : undefined;
-    //         const end = endDate ? new Date(endDate) : undefined;
-
-    //         if (end) {
-    //             end.setHours(23, 59, 59, 999);
-    //         }
-
-    //         let data: LogEntry[] = [];
-    //         let more = false;
-
-    //         if (hasSearch || hasLevel) {
-    //             data = await logService.searchLogs(search, level || undefined, start, end);
-    //             more = false;
-    //         } else if (start || end) {
-    //             const response = await logService.getLogs(start, end, 0, PAGE_SIZE);
-    //             data = response.logs;
-    //             more = response.hasMore;
-    //         } else {
-    //             const response = await logService.getLatestLogs(0, PAGE_SIZE);
-    //             data = response.logs;
-    //             more = response.hasMore;
-    //         }
-
-    //         const elapsed = Date.now() - startTime;
-    //         if (elapsed < MIN_LOADER_DURATION) {
-    //             await new Promise(resolve => setTimeout(resolve, MIN_LOADER_DURATION - elapsed));
-    //         }
-
-    //         setLogs(data);
-    //         setFilteredLogs(data);
-    //         setHasMore(more);
-    //     } catch (err) {
-    //         setError(err instanceof Error ? err.message : 'Failed to fetch logs');
-    //     } finally {
-    //         setLoading(false);
-    //     }
-    // }, [search, level, startDate, endDate]);
 
     const loadMore = useCallback(async () => {
         if (loadingMore || !hasMore) return;
@@ -298,9 +219,9 @@ export const LogDashboard: React.FC = () => {
     };
 
 
-    // Auto-detect discovery state
+    // Auto-detect discovery state (feature not yet wired up — kept for future use)
     const [successModalOpen, setSuccessModalOpen] = useState(false);
-    const discoveryDetails = null as { count: number; path: string; isUnc: boolean; latestFile?: DiscoveredLogFile } | null;
+    const [discoveryDetails] = useState<{ count: number; path: string; isUnc: boolean; latestFile?: DiscoveredLogFile } | null>(null);
 
 
     // Initialize on mount
@@ -310,6 +231,13 @@ export const LogDashboard: React.FC = () => {
         fetchAvailableDates(savedType);
     }, []);
 
+    // Auto-load logs whenever selectedDate changes
+    useEffect(() => {
+        if (selectedDate) {
+            loadLogsByDateStream();
+        }
+    }, [selectedDate, loadLogsByDateStream]);
+
     // Live Polling Effect - full reload every 10 seconds
     useEffect(() => {
         let intervalId: NodeJS.Timeout;
@@ -317,7 +245,7 @@ export const LogDashboard: React.FC = () => {
         if (isLive && selectedDate) {
             intervalId = setInterval(() => {
                 loadLogsByDateStream();
-            }, 10000);
+            }, LIVE_POLL_INTERVAL_MS);
         }
 
         return () => clearInterval(intervalId);
@@ -435,33 +363,6 @@ export const LogDashboard: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* 3. Load Logs Button */}
-                    <button
-                        onClick={loadLogsByDateStream}
-                        disabled={loading || !selectedDate}
-                        className={cn(
-                            "relative px-4 py-2 rounded-xl text-sm font-bold transition-all duration-300 overflow-hidden group flex items-center gap-2",
-                            loading || !selectedDate
-                                ? "bg-gray-800 border border-gray-600 text-gray-400 cursor-not-allowed"
-                                : "bg-gradient-to-r from-emerald-950/80 via-green-900/60 to-emerald-950/80 border border-emerald-500/30 text-emerald-200 hover:border-emerald-400/50 hover:shadow-[0_0_20px_rgba(16,185,129,0.3)]"
-                        )}
-                        title="Load Logs"
-                    >
-                        {(!loading && selectedDate) && (
-                            <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out bg-gradient-to-r from-transparent via-emerald-400/15 to-transparent" />
-                        )}
-                        {loading ? (
-                            <>
-                                <div className="w-4 h-4 border-2 border-gray-600 border-t-emerald-400 rounded-full animate-spin relative z-10" />
-                                <span className="hidden sm:inline relative z-10 uppercase tracking-wider text-[11px] font-bold text-gray-400">Loading...</span>
-                            </>
-                        ) : (
-                            <>
-                                <Download size={15} className={cn("relative z-10 transition-all", selectedDate ? "text-emerald-300 group-hover:text-emerald-200 duration-500 drop-shadow-[0_0_4px_rgba(16,185,129,0.5)]" : "text-gray-500")} />
-                                <span className={cn("hidden sm:inline relative z-10 uppercase tracking-wider text-[11px] font-bold transition-colors", selectedDate ? "text-emerald-200 group-hover:text-emerald-100" : "text-gray-500")}>Load Logs</span>
-                            </>
-                        )}
-                    </button>
 
                     {/* 4. Search - Expands to fill available space */}
                     <div className="relative flex-1 min-w-[200px]">
