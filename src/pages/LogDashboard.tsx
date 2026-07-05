@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useCallback, useRef, startTransition } from 'react';
 import { logService, LogEntry } from '../services/logService';
 import { API_BASE_URL, LIVE_POLL_INTERVAL_MS, PAGE_SIZE } from '../config/constants';
 import { logSourceService, LogSourceType, LogSource } from '../services/logSourceService';
@@ -13,8 +13,10 @@ import { CorrelationModal } from '../components/Correlation/CorrelationModal';
 import { CustomLoader } from '../components/Loader/CustomLoader';
 import { Toast, ToastType } from '../components/Toast';
 import { JumpToNextErrorButton, LogStatsPanel } from '../components/LogStatsPanel';
+import AnalyticsDashboard from '../features/dashboard/AnalyticsDashboard';
+import { findLogIndexByMessage, computeAnalyticsFromLogs, type DashboardAnalytics } from '../features/dashboard/utils/analyticsFromLogs';
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
-import { ChevronDown, Loader2, Search, RotateCw, X, Play, FolderClosed, HardDrive, Server, Calendar } from 'lucide-react';
+import { ChevronDown, Loader2, Search, RotateCw, X, Play, FolderClosed, HardDrive, Server, Calendar, BarChart2 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import zyncLogo from '../assets/zync-logo.png';
 import noLogsFound from '../assets/Not_Found.svg';
@@ -53,6 +55,14 @@ export const LogDashboard: React.FC = () => {
     // Current scroll index for jump to error
     const [currentErrorIndex, setCurrentErrorIndex] = useState(-1);
 
+
+    // Analytics view overlay (log viewer stays mounted)
+    const [showAnalytics, setShowAnalytics] = useState(false);
+    const [precomputedAnalytics, setPrecomputedAnalytics] = useState<DashboardAnalytics | null>(null);
+    const [analyticsComputing, setAnalyticsComputing] = useState(false);
+    const analyticsWorkerRef = useRef<number | null>(null);
+    const pendingScrollIndex = useRef<number | null>(null);
+    const pendingScrollMessage = useRef<string | null>(null);
 
     // Toast notification state
     const [toast, setToast] = useState<{ type: ToastType; message: string; title?: string } | null>(null);
@@ -213,6 +223,81 @@ export const LogDashboard: React.FC = () => {
         }
     }, [level, logs, search]);
 
+    // Precompute analytics in background whenever logs change (debounced)
+    useEffect(() => {
+        if (logs.length === 0) {
+            setPrecomputedAnalytics(null);
+            setAnalyticsComputing(false);
+            return;
+        }
+
+        setAnalyticsComputing(true);
+        if (analyticsWorkerRef.current) {
+            clearTimeout(analyticsWorkerRef.current);
+        }
+
+        analyticsWorkerRef.current = window.setTimeout(() => {
+            setPrecomputedAnalytics(computeAnalyticsFromLogs(logs, { selectedDate }));
+            setAnalyticsComputing(false);
+        }, 100);
+
+        return () => {
+            if (analyticsWorkerRef.current) {
+                clearTimeout(analyticsWorkerRef.current);
+            }
+        };
+    }, [logs, selectedDate]);
+
+    const openAnalytics = useCallback(() => {
+        startTransition(() => {
+            if (!precomputedAnalytics && logs.length > 0) {
+                setPrecomputedAnalytics(computeAnalyticsFromLogs(logs, { selectedDate }));
+                setAnalyticsComputing(false);
+            }
+            setShowAnalytics(true);
+        });
+    }, [logs, selectedDate, precomputedAnalytics]);
+
+    const handleFilterByError = useCallback((message: string) => {
+        setLevel('');
+        setSearch(message);
+        pendingScrollMessage.current = message;
+    }, []);
+
+    const handleJumpToLogIndex = useCallback((index: number) => {
+        setLevel('');
+        setSearch('');
+        pendingScrollIndex.current = index;
+    }, []);
+
+    useEffect(() => {
+        if (showAnalytics) return;
+
+        if (pendingScrollMessage.current) {
+            const message = pendingScrollMessage.current;
+            pendingScrollMessage.current = null;
+            const index = findLogIndexByMessage(filteredLogs, message);
+            if (index >= 0) {
+                requestAnimationFrame(() => {
+                    virtuosoRef.current?.scrollToIndex({ index, align: 'center', behavior: 'smooth' });
+                    setFocusedIndex(index);
+                    setCurrentErrorIndex(index);
+                });
+            }
+            return;
+        }
+
+        if (pendingScrollIndex.current !== null) {
+            const index = pendingScrollIndex.current;
+            pendingScrollIndex.current = null;
+            requestAnimationFrame(() => {
+                virtuosoRef.current?.scrollToIndex({ index, align: 'center', behavior: 'smooth' });
+                setFocusedIndex(index);
+                setCurrentErrorIndex(index);
+            });
+        }
+    }, [showAnalytics, filteredLogs]);
+
     const handleSettingsSave = () => {
         // Sync sourceType from localStorage (SettingsModal saved it)
         const savedType = (localStorage.getItem('logSourceType') as LogSourceType) || 'local';
@@ -302,7 +387,7 @@ export const LogDashboard: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen bg-brand-bg text-brand-text font-sans selection:bg-brand-primary/30">
+        <div className="min-h-screen bg-brand-bg text-brand-text font-sans selection:bg-brand-primary/30 theme-scrollbar">
             <SettingsModal
                 isOpen={isSettingsOpen}
                 onClose={() => setIsSettingsOpen(false)}
@@ -312,6 +397,7 @@ export const LogDashboard: React.FC = () => {
             <CorrelationModal
                 correlationId={selectedCorrelationId}
                 onClose={() => setSelectedCorrelationId(null)}
+                cachedLogs={logs}
             />
 
             <AutoDetectSuccessModal
@@ -436,6 +522,27 @@ export const LogDashboard: React.FC = () => {
                         </div>
                     </button>
 
+                    {/* Analytics — in-app view (logs stay loaded) */}
+                    <button
+                        onClick={openAnalytics}
+                        disabled={!selectedDate || logs.length === 0}
+                        className={cn(
+                            "relative px-4 py-2 rounded-xl text-sm font-bold transition-all duration-300 overflow-hidden group flex items-center gap-2",
+                            !selectedDate || logs.length === 0
+                                ? "bg-gray-800 border border-gray-600 text-gray-400 cursor-not-allowed"
+                                : "bg-gradient-to-r from-indigo-950/80 via-indigo-900/60 to-indigo-950/80 border border-indigo-500/30 text-indigo-200 hover:border-indigo-400/50 hover:shadow-[0_0_20px_rgba(99,102,241,0.3)]"
+                        )}
+                        title="Open log analytics for the selected date"
+                    >
+                        {selectedDate && logs.length > 0 && (
+                            <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out bg-gradient-to-r from-transparent via-indigo-400/15 to-transparent" />
+                        )}
+                        <BarChart2 size={15} className={cn("relative z-10 transition-all", (!selectedDate || logs.length === 0) ? "text-gray-400" : "text-indigo-300 group-hover:text-indigo-200 drop-shadow-[0_0_4px_rgba(99,102,241,0.5)]")} />
+                        <span className={cn("hidden sm:inline relative z-10 uppercase tracking-wider text-[11px] font-bold", (!selectedDate || logs.length === 0) ? "text-gray-400" : "text-indigo-200 group-hover:text-indigo-100")}>
+                            Analytics
+                        </span>
+                    </button>
+
                     {/* Refresh Button */}
                     <button
                         onClick={loadLogsByDateStream}
@@ -523,6 +630,24 @@ export const LogDashboard: React.FC = () => {
                     title={toast.title}
                     onClose={() => setToast(null)}
                     duration={4000}
+                />
+            )}
+
+            {showAnalytics && (
+                <AnalyticsDashboard
+                    logs={logs}
+                    selectedDate={selectedDate}
+                    analytics={precomputedAnalytics}
+                    computing={analyticsComputing}
+                    onBack={() => setShowAnalytics(false)}
+                    onFilterByError={(message) => {
+                        handleFilterByError(message);
+                        setShowAnalytics(false);
+                    }}
+                    onJumpToLogIndex={(index) => {
+                        handleJumpToLogIndex(index);
+                        setShowAnalytics(false);
+                    }}
                 />
             )}
         </div>
